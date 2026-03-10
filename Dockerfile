@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:17-jdk-jammy
 
 ARG MINDUSTRY_VERSION=v155.4
 ARG MINDUSTRY_SHA256=cb96a68d2a9badf58a0640062607f953b1ed551ed7b4af0c2bf393d8ce8d6643
@@ -14,6 +14,7 @@ RUN curl -fsSL "https://github.com/Anuken/Mindustry/releases/download/${MINDUSTR
     && echo "${MINDUSTRY_SHA256}  /opt/mindustry/server-release.jar" | sha256sum -c -
 
 COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/patches /opt/mindustry-patches
 
 RUN chmod +x /entrypoint.sh
 

@@ -4,7 +4,7 @@
 
 ## Что внутри
 
-- База: `eclipse-temurin:17-jre-jammy`
+- База: `eclipse-temurin:17-jdk-jammy`
 - Источник сервера: официальный `server-release.jar` из релиза `v155.4`
 - Проверка артефакта по SHA-256 во время `docker compose build`
 - Данные, карты, моды, сейвы и настройки лежат в `./data/config`
@@ -80,6 +80,10 @@ docker attach $(docker compose ps -q mindustry)
 - `SERVER_AUTO_PAUSE=true`
 - `SERVER_STRICT=true`
 - `SERVER_EXTRA_COMMANDS=`
+- `ENABLE_NEW_HORIZON=false`
+- `NEW_HORIZON_VERSION=2.0_v154_1`
+- `NEW_HORIZON_URL=https://github.com/Yuria-Shikibe/NewHorizonMod/releases/download/2.0_v154_1/NewHorizonMod.2.0_v154_1.jar`
+- `NEW_HORIZON_SHA256=052545941e5a306b2ca03cb80e90d4138efc4d78db21c44138dd55e5830d0003`
 
 `SERVER_EXTRA_COMMANDS` передаётся как comma-separated список команд Mindustry, например:
 
@@ -94,6 +98,8 @@ SERVER_EXTRA_COMMANDS=config autosave on,config autosaveSpacing 10
 - Карты: `./data/config/maps`
 - Моды: `./data/config/mods`
 - Сейвы, логи, настройки и админы тоже живут в `./data/config`
+
+Если `ENABLE_NEW_HORIZON=true`, entrypoint автоматически скачает зафиксированный релиз New Horizon в `./data/config/mods`, проверит его SHA-256 и затем применит локальный headless-патч для dedicated-сервера.
 
 ## Ограничение upstream
 
