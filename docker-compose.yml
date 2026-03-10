@@ -5,6 +5,8 @@ services:
       args:
         MINDUSTRY_VERSION: ${MINDUSTRY_VERSION:-v155.4}
         MINDUSTRY_SHA256: ${MINDUSTRY_SHA256:-cb96a68d2a9badf58a0640062607f953b1ed551ed7b4af0c2bf393d8ce8d6643}
+    env_file:
+      - .env
     restart: unless-stopped
     working_dir: /data
     stdin_open: true
