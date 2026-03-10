@@ -1,0 +1,27 @@
+services:
+  mindustry:
+    build:
+      context: .
+      args:
+        MINDUSTRY_VERSION: ${MINDUSTRY_VERSION:-v155.4}
+        MINDUSTRY_SHA256: ${MINDUSTRY_SHA256:-cb96a68d2a9badf58a0640062607f953b1ed551ed7b4af0c2bf393d8ce8d6643}
+    restart: unless-stopped
+    working_dir: /data
+    stdin_open: true
+    tty: true
+    ports:
+      - "${SERVER_PORT:-6567}:${SERVER_PORT:-6567}/tcp"
+      - "${SERVER_PORT:-6567}:${SERVER_PORT:-6567}/udp"
+    volumes:
+      - ./data:/data
+    environment:
+      JAVA_OPTS: "${JAVA_OPTS:--Xms512m -Xmx2G}"
+      SERVER_NAME: "${SERVER_NAME:-Mindustry 155.4 Beta}"
+      SERVER_DESC: "${SERVER_DESC:-Public beta server}"
+      SERVER_PORT: "${SERVER_PORT:-6567}"
+      SERVER_MODE: "${SERVER_MODE:-survival}"
+      SERVER_MAP: "${SERVER_MAP:-}"
+      SERVER_AUTO_HOST: "${SERVER_AUTO_HOST:-true}"
+      SERVER_AUTO_PAUSE: "${SERVER_AUTO_PAUSE:-true}"
+      SERVER_STRICT: "${SERVER_STRICT:-true}"
+      SERVER_EXTRA_COMMANDS: "${SERVER_EXTRA_COMMANDS:-}"
