@@ -18,6 +18,7 @@ JAVA_OPTS="${JAVA_OPTS:--Xms512m -Xmx2G}"
 
 mkdir -p /data/config
 mkdir -p /data/config/mods
+mkdir -p /data/config/maps
 
 case "$SERVER_NAME" in
   *,*)
@@ -111,6 +112,34 @@ install_new_horizon() {
   esac
 }
 
+ensure_builtin_map() {
+  map_alias="$1"
+  RESOLVED_SERVER_MAP="$map_alias"
+
+  case "$map_alias" in
+    Tar_Fields|tarFields|tar-fields|tar_fields)
+      map_file="/data/config/maps/tarFields.msav"
+
+      if [ ! -f "$map_file" ]; then
+        workdir="/tmp/mindustry-map-extract"
+        rm -rf "$workdir"
+        mkdir -p "$workdir"
+        (
+          cd "$workdir"
+          jar xf /opt/mindustry/server-release.jar maps/serpulo/tarFields.msav
+        )
+        mv "$workdir/maps/serpulo/tarFields.msav" "$map_file"
+        rm -rf "$workdir"
+        echo "Extracted built-in campaign map Tar Fields to ${map_file}" >&2
+      fi
+
+      # Campaign maps imported from the server jar are registered as custom maps.
+      RESOLVED_SERVER_MAP="tarfields"
+      return
+      ;;
+  esac
+}
+
 append_command() {
   command="$1"
   if [ -z "$command" ]; then
@@ -136,7 +165,8 @@ auto_host="$(printf '%s' "$SERVER_AUTO_HOST" | tr '[:upper:]' '[:lower:]')"
 case "$auto_host" in
   true|1|yes|on)
     if [ -n "$SERVER_MAP" ]; then
-      append_command "host $SERVER_MAP $SERVER_MODE"
+      ensure_builtin_map "$SERVER_MAP"
+      append_command "host $RESOLVED_SERVER_MAP $SERVER_MODE"
     else
       if [ "$SERVER_MODE" != "survival" ]; then
         echo "SERVER_MODE requires SERVER_MAP when mode is not 'survival'." >&2

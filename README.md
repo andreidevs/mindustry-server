@@ -75,7 +75,7 @@ docker attach $(docker compose ps -q mindustry)
 - `SERVER_DESC=Public beta server`
 - `SERVER_PORT=6567`
 - `SERVER_MODE=survival`
-- `SERVER_MAP=Abandoned_Outpost`
+- `SERVER_MAP=Tar_Fields`
 - `SERVER_AUTO_HOST=true`
 - `SERVER_AUTO_PAUSE=true`
 - `SERVER_STRICT=true`
@@ -100,6 +100,8 @@ SERVER_EXTRA_COMMANDS=config autosave on,config autosaveSpacing 10
 - Сейвы, логи, настройки и админы тоже живут в `./data/config`
 
 Если `ENABLE_NEW_HORIZON=true`, entrypoint автоматически скачает зафиксированный релиз New Horizon в `./data/config/mods`, проверит его SHA-256 и затем применит локальный headless-патч для dedicated-сервера.
+
+Для `SERVER_MAP=Tar_Fields` entrypoint автоматически извлекает встроенную campaign-карту `Tar Fields` из `server-release.jar` в `./data/config/maps`. Это нужно, потому что у headless-сервера такая карта не хостится напрямую как встроенная.
 
 ## Ограничение upstream
 
