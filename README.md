@@ -80,6 +80,7 @@ docker attach $(docker compose ps -q mindustry)
 - `SERVER_AUTO_PAUSE=true`
 - `SERVER_STRICT=true`
 - `SERVER_EXTRA_COMMANDS=`
+- `ENABLE_EXOGENESIS=true`
 - `ENABLE_NEW_HORIZON=false`
 - `NEW_HORIZON_VERSION=2.0_v154_1`
 - `NEW_HORIZON_URL=https://github.com/Yuria-Shikibe/NewHorizonMod/releases/download/2.0_v154_1/NewHorizonMod.2.0_v154_1.jar`
@@ -102,6 +103,8 @@ SERVER_EXTRA_COMMANDS=config autosave on,config autosaveSpacing 10
 Если `ENABLE_NEW_HORIZON=true`, entrypoint автоматически скачает зафиксированный релиз New Horizon в `./data/config/mods`, проверит его SHA-256 и затем применит локальный headless-патч для dedicated-сервера.
 
 Для `SERVER_MAP=Tar_Fields` entrypoint автоматически извлекает встроенную campaign-карту `Tar Fields` из `server-release.jar` в `./data/config/maps`. Это нужно, потому что у headless-сервера такая карта не хостится напрямую как встроенная.
+
+Если `ENABLE_EXOGENESIS=true`, entrypoint автоматически скачает зафиксированный snapshot `Exogenesis` в `./data/config/mods/exogenesis` и сервер снова будет требовать этот мод у клиентов.
 
 ## Ограничение upstream
 

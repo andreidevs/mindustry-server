@@ -10,6 +10,10 @@ SERVER_AUTO_HOST="${SERVER_AUTO_HOST:-true}"
 SERVER_AUTO_PAUSE="${SERVER_AUTO_PAUSE:-true}"
 SERVER_STRICT="${SERVER_STRICT:-true}"
 SERVER_EXTRA_COMMANDS="${SERVER_EXTRA_COMMANDS:-}"
+ENABLE_EXOGENESIS="${ENABLE_EXOGENESIS:-false}"
+EXOGENESIS_COMMIT="${EXOGENESIS_COMMIT:-f173a5b34e4133f0a9bdfdedb1d75b9e01501269}"
+EXOGENESIS_URL="${EXOGENESIS_URL:-https://codeload.github.com/AureusStratus/ExoGenesis/tar.gz/${EXOGENESIS_COMMIT}}"
+EXOGENESIS_SHA256="${EXOGENESIS_SHA256:-bcb5861821e118e799dd2a79c419782984148a8b57f8c15f8da7e3c8504e1827}"
 ENABLE_NEW_HORIZON="${ENABLE_NEW_HORIZON:-false}"
 NEW_HORIZON_VERSION="${NEW_HORIZON_VERSION:-2.0_v154_1}"
 NEW_HORIZON_URL="${NEW_HORIZON_URL:-https://github.com/Yuria-Shikibe/NewHorizonMod/releases/download/2.0_v154_1/NewHorizonMod.2.0_v154_1.jar}"
@@ -112,6 +116,46 @@ install_new_horizon() {
   esac
 }
 
+install_exogenesis() {
+  enabled="$(printf '%s' "$ENABLE_EXOGENESIS" | tr '[:upper:]' '[:lower:]')"
+  case "$enabled" in
+    true|1|yes|on)
+      mod_dir="/data/config/mods/exogenesis"
+      marker_file="${mod_dir}/.installed-commit"
+      tmp_root="/tmp/exogenesis-install"
+      tmp_archive="${tmp_root}/exogenesis.tar.gz"
+      tmp_dir="/data/config/mods/.exogenesis-tmp"
+
+      if [ -f "$marker_file" ] && [ -f "${mod_dir}/mod.json" ] && [ "$(cat "$marker_file")" = "$EXOGENESIS_COMMIT" ]; then
+        echo "Exogenesis already installed: ${mod_dir}"
+        return
+      fi
+
+      rm -rf "$tmp_root" "$tmp_dir"
+      mkdir -p "$tmp_root" "$tmp_dir"
+
+      echo "Downloading Exogenesis ${EXOGENESIS_COMMIT}..."
+      curl -fsSL "$EXOGENESIS_URL" -o "$tmp_archive"
+      echo "${EXOGENESIS_SHA256}  ${tmp_archive}" | sha256sum -c -
+
+      tar -xzf "$tmp_archive" -C "$tmp_dir" --strip-components=1
+      printf '%s\n' "$EXOGENESIS_COMMIT" > "$tmp_dir/.installed-commit"
+
+      rm -rf "$mod_dir"
+      mv "$tmp_dir" "$mod_dir"
+      rm -rf "$tmp_root"
+
+      echo "Installed Exogenesis: ${mod_dir}"
+      ;;
+    false|0|no|off)
+      ;;
+    *)
+      echo "Invalid boolean value: $ENABLE_EXOGENESIS" >&2
+      exit 1
+      ;;
+  esac
+}
+
 ensure_builtin_map() {
   map_alias="$1"
   RESOLVED_SERVER_MAP="$map_alias"
@@ -160,6 +204,7 @@ append_command "config autoPause $(normalize_bool "$SERVER_AUTO_PAUSE")"
 append_command "config strict $(normalize_bool "$SERVER_STRICT")"
 
 install_new_horizon
+install_exogenesis
 
 auto_host="$(printf '%s' "$SERVER_AUTO_HOST" | tr '[:upper:]' '[:lower:]')"
 case "$auto_host" in
