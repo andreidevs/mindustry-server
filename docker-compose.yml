@@ -22,7 +22,7 @@ services:
       SERVER_DESC: "${SERVER_DESC:-Public beta server}"
       SERVER_PORT: "${SERVER_PORT:-6567}"
       SERVER_MODE: "${SERVER_MODE:-survival}"
-      SERVER_MAP: "${SERVER_MAP:-Midantha}"
+      SERVER_MAP: "${SERVER_MAP:-Abandoned_Outpost}"
       SERVER_AUTO_HOST: "${SERVER_AUTO_HOST:-true}"
       SERVER_AUTO_PAUSE: "${SERVER_AUTO_PAUSE:-true}"
       SERVER_STRICT: "${SERVER_STRICT:-true}"

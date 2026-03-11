@@ -75,7 +75,7 @@ docker attach $(docker compose ps -q mindustry)
 - `SERVER_DESC=Public beta server`
 - `SERVER_PORT=6567`
 - `SERVER_MODE=survival`
-- `SERVER_MAP=Midantha`
+- `SERVER_MAP=Abandoned_Outpost`
 - `SERVER_AUTO_HOST=true`
 - `SERVER_AUTO_PAUSE=true`
 - `SERVER_STRICT=true`
