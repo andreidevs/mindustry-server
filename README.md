@@ -75,7 +75,7 @@ docker attach $(docker compose ps -q mindustry)
 - `SERVER_DESC=Public beta server`
 - `SERVER_PORT=6567`
 - `SERVER_MODE=survival`
-- `SERVER_MAP=`
+- `SERVER_MAP=Midantha`
 - `SERVER_AUTO_HOST=true`
 - `SERVER_AUTO_PAUSE=true`
 - `SERVER_STRICT=true`
@@ -105,5 +105,6 @@ SERVER_EXTRA_COMMANDS=config autosave on,config autosaveSpacing 10
 
 У команды `host` у headless-сервера нельзя выбрать случайную карту и одновременно передать произвольный режим кроме `survival`. Поэтому:
 
-- если `SERVER_MAP` пустой и `SERVER_MODE=survival`, entrypoint запускает просто `host`
-- если нужен другой режим, задайте `SERVER_MAP`
+- если `SERVER_MAP` задан, entrypoint запускает `host <map> <mode>`
+- если намеренно оставить `SERVER_MAP` пустым и `SERVER_MODE=survival`, entrypoint запускает просто `host`
+- для любого режима кроме `survival` карта обязательна
