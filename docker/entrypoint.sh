@@ -20,9 +20,14 @@ NEW_HORIZON_URL="${NEW_HORIZON_URL:-https://github.com/Yuria-Shikibe/NewHorizonM
 NEW_HORIZON_SHA256="${NEW_HORIZON_SHA256:-052545941e5a306b2ca03cb80e90d4138efc4d78db21c44138dd55e5830d0003}"
 JAVA_OPTS="${JAVA_OPTS:--Xms512m -Xmx2G}"
 
-mkdir -p /data/config
-mkdir -p /data/config/mods
-mkdir -p /data/config/maps
+SERVER_ROOT_DIR="$(pwd)"
+SERVER_DATA_DIR="${SERVER_ROOT_DIR}/config"
+SERVER_MODS_DIR="${SERVER_DATA_DIR}/mods"
+SERVER_MAPS_DIR="${SERVER_DATA_DIR}/maps"
+
+mkdir -p "$SERVER_DATA_DIR"
+mkdir -p "$SERVER_MODS_DIR"
+mkdir -p "$SERVER_MAPS_DIR"
 
 case "$SERVER_NAME" in
   *,*)
@@ -69,8 +74,8 @@ install_new_horizon() {
   enabled="$(printf '%s' "$ENABLE_NEW_HORIZON" | tr '[:upper:]' '[:lower:]')"
   case "$enabled" in
     true|1|yes|on)
-      mod_file="/data/config/mods/NewHorizonMod.${NEW_HORIZON_VERSION}.jar"
-      patch_marker="/data/config/mods/.new-horizon-${NEW_HORIZON_VERSION}.headless-patched"
+      mod_file="${SERVER_MODS_DIR}/NewHorizonMod.${NEW_HORIZON_VERSION}.jar"
+      patch_marker="${SERVER_MODS_DIR}/.new-horizon-${NEW_HORIZON_VERSION}.headless-patched"
       patch_src="/opt/mindustry-patches/newhorizon/src/newhorizon/content/NHSounds.java"
 
       patch_new_horizon() {
@@ -120,11 +125,11 @@ install_exogenesis() {
   enabled="$(printf '%s' "$ENABLE_EXOGENESIS" | tr '[:upper:]' '[:lower:]')"
   case "$enabled" in
     true|1|yes|on)
-      mod_dir="/data/config/mods/exogenesis"
+      mod_dir="${SERVER_MODS_DIR}/exogenesis"
       marker_file="${mod_dir}/.installed-commit"
       tmp_root="/tmp/exogenesis-install"
       tmp_archive="${tmp_root}/exogenesis.tar.gz"
-      tmp_dir="/data/config/mods/.exogenesis-tmp"
+      tmp_dir="${SERVER_MODS_DIR}/.exogenesis-tmp"
 
       if [ -f "$marker_file" ] && [ -f "${mod_dir}/mod.json" ] && [ "$(cat "$marker_file")" = "$EXOGENESIS_COMMIT" ]; then
         echo "Exogenesis already installed: ${mod_dir}"
@@ -162,7 +167,7 @@ ensure_builtin_map() {
 
   case "$map_alias" in
     Tar_Fields|tarFields|tar-fields|tar_fields)
-      map_file="/data/config/maps/tarFields.msav"
+      map_file="${SERVER_MAPS_DIR}/tarFields.msav"
 
       if [ ! -f "$map_file" ]; then
         workdir="/tmp/mindustry-map-extract"
@@ -232,6 +237,7 @@ if [ -n "$SERVER_EXTRA_COMMANDS" ]; then
   append_command "$SERVER_EXTRA_COMMANDS"
 fi
 
+echo "Using Mindustry data directory: ${SERVER_DATA_DIR}"
 echo "Launching Mindustry server with commands: ${START_COMMANDS:-<none>}"
 
 # Intentional word splitting for JAVA_OPTS.

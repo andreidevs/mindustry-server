@@ -5,10 +5,8 @@ services:
       args:
         MINDUSTRY_VERSION: ${MINDUSTRY_VERSION:-v155.4}
         MINDUSTRY_SHA256: ${MINDUSTRY_SHA256:-cb96a68d2a9badf58a0640062607f953b1ed551ed7b4af0c2bf393d8ce8d6643}
-    env_file:
-      - .env
     restart: unless-stopped
-    working_dir: /data
+    working_dir: ${SERVER_WORKDIR:-/data}
     stdin_open: true
     tty: true
     ports:
@@ -28,6 +26,37 @@ services:
       SERVER_STRICT: "${SERVER_STRICT:-true}"
       SERVER_EXTRA_COMMANDS: "${SERVER_EXTRA_COMMANDS:-}"
       ENABLE_NEW_HORIZON: "${ENABLE_NEW_HORIZON:-false}"
+      NEW_HORIZON_VERSION: "${NEW_HORIZON_VERSION:-2.0_v154_1}"
+      NEW_HORIZON_URL: "${NEW_HORIZON_URL:-https://github.com/Yuria-Shikibe/NewHorizonMod/releases/download/2.0_v154_1/NewHorizonMod.2.0_v154_1.jar}"
+      NEW_HORIZON_SHA256: "${NEW_HORIZON_SHA256:-052545941e5a306b2ca03cb80e90d4138efc4d78db21c44138dd55e5830d0003}"
+  mindustry-2:
+    build:
+      context: .
+      args:
+        MINDUSTRY_VERSION: ${MINDUSTRY_VERSION:-v155.4}
+        MINDUSTRY_SHA256: ${MINDUSTRY_SHA256:-cb96a68d2a9badf58a0640062607f953b1ed551ed7b4af0c2bf393d8ce8d6643}
+    restart: unless-stopped
+    working_dir: ${SERVER2_WORKDIR:-/data/instances/server-2}
+    stdin_open: true
+    tty: true
+    ports:
+      - "${SERVER2_PORT:-6568}:${SERVER2_PORT:-6568}/tcp"
+      - "${SERVER2_PORT:-6568}:${SERVER2_PORT:-6568}/udp"
+    volumes:
+      - ./data:/data
+    environment:
+      JAVA_OPTS: "${JAVA_OPTS:--Xms512m -Xmx2G}"
+      SERVER_NAME: "${SERVER2_NAME:-Mindustry 155.4 Beta 2}"
+      SERVER_DESC: "${SERVER2_DESC:-Public beta server 2}"
+      SERVER_PORT: "${SERVER2_PORT:-6568}"
+      SERVER_MODE: "${SERVER2_MODE:-sandbox}"
+      SERVER_MAP: "${SERVER2_MAP:-Wasteland}"
+      SERVER_AUTO_HOST: "${SERVER2_AUTO_HOST:-true}"
+      SERVER_AUTO_PAUSE: "${SERVER2_AUTO_PAUSE:-true}"
+      SERVER_STRICT: "${SERVER2_STRICT:-true}"
+      SERVER_EXTRA_COMMANDS: "${SERVER2_EXTRA_COMMANDS:-rules add infiniteResources false}"
+      ENABLE_EXOGENESIS: "${SERVER2_ENABLE_EXOGENESIS:-false}"
+      ENABLE_NEW_HORIZON: "${SERVER2_ENABLE_NEW_HORIZON:-false}"
       NEW_HORIZON_VERSION: "${NEW_HORIZON_VERSION:-2.0_v154_1}"
       NEW_HORIZON_URL: "${NEW_HORIZON_URL:-https://github.com/Yuria-Shikibe/NewHorizonMod/releases/download/2.0_v154_1/NewHorizonMod.2.0_v154_1.jar}"
       NEW_HORIZON_SHA256: "${NEW_HORIZON_SHA256:-052545941e5a306b2ca03cb80e90d4138efc4d78db21c44138dd55e5830d0003}"

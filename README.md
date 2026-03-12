@@ -7,16 +7,28 @@
 - База: `eclipse-temurin:17-jdk-jammy`
 - Источник сервера: официальный `server-release.jar` из релиза `v155.4`
 - Проверка артефакта по SHA-256 во время `docker compose build`
-- Данные, карты, моды, сейвы и настройки лежат в `./data/config`
+- Данные инстанса лежат в `${SERVER_WORKDIR}/config`, для текущего основного сервера это по умолчанию `./data/config`
 
 ## Запуск
 
-Docker Compose использует файл `.env` из корня проекта как runtime-конфиг контейнера. Шаблон значений лежит в `.env.example`.
+По умолчанию Docker Compose использует файл `.env` из корня проекта. Шаблон значений лежит в `.env.example`. Для дополнительных инстансов можно передавать другой env-файл через `--env-file`.
 
-Запуск сервера:
+Запуск обоих серверов из `docker-compose.yml`:
 
 ```bash
 docker compose up -d --build
+```
+
+Запуск только первого сервера:
+
+```bash
+docker compose up -d --build mindustry
+```
+
+Запуск только второго сервера:
+
+```bash
+docker compose up -d --build mindustry-2
 ```
 
 Проверка конфигурации:
@@ -43,6 +55,8 @@ docker compose down
 
 - `6567/tcp`
 - `6567/udp`
+- `6568/tcp`
+- `6568/udp`
 
 Если меняете `SERVER_PORT`, откройте тот же порт для TCP и UDP.
 
@@ -66,11 +80,12 @@ docker attach $(docker compose ps -q mindustry)
 
 ## Переменные окружения
 
-Основные параметры задаются через `.env` и передаются в контейнер через `env_file`:
+Основные параметры задаются через `.env` или через альтернативный файл, переданный в `docker compose --env-file ...`:
 
 - `MINDUSTRY_VERSION=v155.4`
 - `MINDUSTRY_SHA256=cb96a68d2a9badf58a0640062607f953b1ed551ed7b4af0c2bf393d8ce8d6643`
 - `JAVA_OPTS=-Xms512m -Xmx2G`
+- `SERVER_WORKDIR=/data`
 - `SERVER_NAME=Mindustry 155.4 Beta`
 - `SERVER_DESC=Public beta server`
 - `SERVER_PORT=6567`
@@ -94,17 +109,77 @@ SERVER_EXTRA_COMMANDS=config autosave on,config autosaveSpacing 10
 
 ## Карты, моды и данные
 
-После первого старта сервер создаст каталоги внутри `./data/config`.
+После первого старта сервер создаст каталог `${SERVER_WORKDIR}/config`.
 
-- Карты: `./data/config/maps`
-- Моды: `./data/config/mods`
-- Сейвы, логи, настройки и админы тоже живут в `./data/config`
+- Для текущего основного сервера при `SERVER_WORKDIR=/data` это будет `./data/config`
+- Для второго инстанса с `SERVER_WORKDIR=/data/instances/server-2` это будет `./data/instances/server-2/config`
+- Карты: `${SERVER_WORKDIR}/config/maps`
+- Моды: `${SERVER_WORKDIR}/config/mods`
+- Сейвы, логи, настройки и админы тоже живут в `${SERVER_WORKDIR}/config`
 
-Если `ENABLE_NEW_HORIZON=true`, entrypoint автоматически скачает зафиксированный релиз New Horizon в `./data/config/mods`, проверит его SHA-256 и затем применит локальный headless-патч для dedicated-сервера.
+Если `ENABLE_NEW_HORIZON=true`, entrypoint автоматически скачает зафиксированный релиз New Horizon в `${SERVER_WORKDIR}/config/mods`, проверит его SHA-256 и затем применит локальный headless-патч для dedicated-сервера.
 
-Для `SERVER_MAP=Tar_Fields` entrypoint автоматически извлекает встроенную campaign-карту `Tar Fields` из `server-release.jar` в `./data/config/maps`. Это нужно, потому что у headless-сервера такая карта не хостится напрямую как встроенная.
+Для `SERVER_MAP=Tar_Fields` entrypoint автоматически извлекает встроенную campaign-карту `Tar Fields` из `server-release.jar` в `${SERVER_WORKDIR}/config/maps`. Это нужно, потому что у headless-сервера такая карта не хостится напрямую как встроенная.
 
-Если `ENABLE_EXOGENESIS=true`, entrypoint автоматически скачает зафиксированный snapshot `Exogenesis` в `./data/config/mods/exogenesis` и сервер снова будет требовать этот мод у клиентов.
+Если `ENABLE_EXOGENESIS=true`, entrypoint автоматически скачает зафиксированный snapshot `Exogenesis` в `${SERVER_WORKDIR}/config/mods/exogenesis` и сервер снова будет требовать этот мод у клиентов.
+
+## Несколько инстансов без потери прогресса
+
+Текущий сервер можно оставить как есть: он продолжит использовать `./data/config`, и его прогресс не потеряется.
+
+В `docker-compose.yml` уже добавлен второй сервис `mindustry-2`:
+
+- `mindustry` использует `./data/config`, порт `6567`, карту из `SERVER_MAP`
+- `mindustry-2` использует `./data/instances/server-2/config`, порт `6568`, карту из `SERVER2_MAP`
+
+Для каждого нового сервера нужны три уникальные вещи:
+
+- отдельный `SERVER_WORKDIR`
+- отдельный `SERVER_PORT`
+- отдельный project name у Docker Compose
+
+Пример для второго сервера:
+
+```bash
+cp instances/server-2.env.example instances/server-2.env
+```
+
+Измените в `instances/server-2.env` как минимум:
+
+- `SERVER_WORKDIR=/data/instances/server-2`
+- `SERVER_PORT=6568`
+- `SERVER_NAME=andreidev-2`
+
+Запуск второго сервера:
+
+```bash
+docker compose --project-name mindustry-server-2 --env-file instances/server-2.env up -d --build
+```
+
+Логи второго сервера:
+
+```bash
+docker compose --project-name mindustry-server-2 --env-file instances/server-2.env logs -f
+```
+
+Остановка второго сервера:
+
+```bash
+docker compose --project-name mindustry-server-2 --env-file instances/server-2.env down
+```
+
+Подключение к консоли второго сервера:
+
+```bash
+docker attach $(docker compose --project-name mindustry-server-2 --env-file instances/server-2.env ps -q mindustry)
+```
+
+Важно:
+
+- не запускайте два контейнера с одним и тем же `SERVER_WORKDIR`
+- не используйте один и тот же `SERVER_PORT` у двух инстансов
+- если нужен третий сервер, создайте ещё один env-файл с новым `SERVER_WORKDIR`, новым `SERVER_PORT` и новым `--project-name`
+- несколько инстансов не должны делить один и тот же прогресс одновременно; один каталог данных = один серверный процесс
 
 ## Ограничение upstream
 
