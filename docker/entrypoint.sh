@@ -9,6 +9,8 @@ SERVER_MAP="${SERVER_MAP:-Abandoned_Outpost}"
 SERVER_AUTO_HOST="${SERVER_AUTO_HOST:-true}"
 SERVER_AUTO_PAUSE="${SERVER_AUTO_PAUSE:-true}"
 SERVER_STRICT="${SERVER_STRICT:-true}"
+SERVER_BOOTSTRAP_MODE="${SERVER_BOOTSTRAP_MODE:-auto}"
+SERVER_BOOTSTRAP_SAVE_SLOT="${SERVER_BOOTSTRAP_SAVE_SLOT:-}"
 SERVER_EXTRA_COMMANDS="${SERVER_EXTRA_COMMANDS:-}"
 ENABLE_EXOGENESIS="${ENABLE_EXOGENESIS:-false}"
 EXOGENESIS_COMMIT="${EXOGENESIS_COMMIT:-f173a5b34e4133f0a9bdfdedb1d75b9e01501269}"
@@ -24,10 +26,13 @@ SERVER_ROOT_DIR="$(pwd)"
 SERVER_DATA_DIR="${SERVER_ROOT_DIR}/config"
 SERVER_MODS_DIR="${SERVER_DATA_DIR}/mods"
 SERVER_MAPS_DIR="${SERVER_DATA_DIR}/maps"
+SERVER_SAVES_DIR="${SERVER_DATA_DIR}/saves"
+SERVER_SEED_SAVES_DIR="/opt/mindustry-seeds/saves"
 
 mkdir -p "$SERVER_DATA_DIR"
 mkdir -p "$SERVER_MODS_DIR"
 mkdir -p "$SERVER_MAPS_DIR"
+mkdir -p "$SERVER_SAVES_DIR"
 
 case "$SERVER_NAME" in
   *,*)
@@ -161,6 +166,77 @@ install_exogenesis() {
   esac
 }
 
+seed_save_files() {
+  if [ ! -d "$SERVER_SEED_SAVES_DIR" ]; then
+    return
+  fi
+
+  found_seed_file=false
+
+  for seed_file in "$SERVER_SEED_SAVES_DIR"/*.msav; do
+    if [ ! -e "$seed_file" ]; then
+      continue
+    fi
+
+    found_seed_file=true
+    target_file="${SERVER_SAVES_DIR}/$(basename "$seed_file")"
+
+    if [ -f "$target_file" ]; then
+      continue
+    fi
+
+    cp "$seed_file" "$target_file"
+    echo "Seeded save file: ${target_file}"
+  done
+
+  if [ "$found_seed_file" = true ]; then
+    echo "Seed save directory detected: ${SERVER_SEED_SAVES_DIR}"
+  fi
+}
+
+has_autosave() {
+  for autosave_file in "$SERVER_SAVES_DIR"/auto_*.msav; do
+    if [ -e "$autosave_file" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+resolve_bootstrap_save_slot() {
+  if [ -n "$SERVER_BOOTSTRAP_SAVE_SLOT" ]; then
+    target_save="${SERVER_SAVES_DIR}/${SERVER_BOOTSTRAP_SAVE_SLOT}.msav"
+
+    if [ ! -f "$target_save" ]; then
+      echo "Configured bootstrap save slot '${SERVER_BOOTSTRAP_SAVE_SLOT}' was not found at ${target_save}." >&2
+      exit 1
+    fi
+
+    RESOLVED_BOOTSTRAP_SAVE_SLOT="$SERVER_BOOTSTRAP_SAVE_SLOT"
+    return 0
+  fi
+
+  seed_count=0
+  detected_slot=""
+
+  for seed_file in "$SERVER_SEED_SAVES_DIR"/*.msav; do
+    if [ ! -e "$seed_file" ]; then
+      continue
+    fi
+
+    seed_count=$((seed_count + 1))
+    detected_slot="$(basename "$seed_file" .msav)"
+  done
+
+  if [ "$seed_count" -eq 1 ]; then
+    RESOLVED_BOOTSTRAP_SAVE_SLOT="$detected_slot"
+    return 0
+  fi
+
+  return 1
+}
+
 ensure_builtin_map() {
   map_alias="$1"
   RESOLVED_SERVER_MAP="$map_alias"
@@ -210,19 +286,45 @@ append_command "config strict $(normalize_bool "$SERVER_STRICT")"
 
 install_new_horizon
 install_exogenesis
+seed_save_files
+
+BOOTSTRAP_HANDLED=false
+bootstrap_mode="$(printf '%s' "$SERVER_BOOTSTRAP_MODE" | tr '[:upper:]' '[:lower:]')"
+
+case "$bootstrap_mode" in
+  auto)
+    if has_autosave; then
+      append_command "loadautosave"
+      BOOTSTRAP_HANDLED=true
+      echo "Bootstrap source: latest autosave"
+    elif resolve_bootstrap_save_slot; then
+      append_command "load $RESOLVED_BOOTSTRAP_SAVE_SLOT"
+      BOOTSTRAP_HANDLED=true
+      echo "Bootstrap source: save slot ${RESOLVED_BOOTSTRAP_SAVE_SLOT}"
+    fi
+    ;;
+  off|false|0|no)
+    ;;
+  *)
+    echo "Invalid bootstrap mode: $SERVER_BOOTSTRAP_MODE" >&2
+    exit 1
+    ;;
+esac
 
 auto_host="$(printf '%s' "$SERVER_AUTO_HOST" | tr '[:upper:]' '[:lower:]')"
 case "$auto_host" in
   true|1|yes|on)
-    if [ -n "$SERVER_MAP" ]; then
-      ensure_builtin_map "$SERVER_MAP"
-      append_command "host $RESOLVED_SERVER_MAP $SERVER_MODE"
-    else
-      if [ "$SERVER_MODE" != "survival" ]; then
-        echo "SERVER_MODE requires SERVER_MAP when mode is not 'survival'." >&2
-        exit 1
+    if [ "$BOOTSTRAP_HANDLED" = false ]; then
+      if [ -n "$SERVER_MAP" ]; then
+        ensure_builtin_map "$SERVER_MAP"
+        append_command "host $RESOLVED_SERVER_MAP $SERVER_MODE"
+      else
+        if [ "$SERVER_MODE" != "survival" ]; then
+          echo "SERVER_MODE requires SERVER_MAP when mode is not 'survival'." >&2
+          exit 1
+        fi
+        append_command "host"
       fi
-      append_command "host"
     fi
     ;;
   false|0|no|off)

@@ -94,6 +94,8 @@ docker attach $(docker compose ps -q mindustry)
 - `SERVER_AUTO_HOST=true`
 - `SERVER_AUTO_PAUSE=true`
 - `SERVER_STRICT=true`
+- `SERVER_BOOTSTRAP_MODE=auto`
+- `SERVER_BOOTSTRAP_SAVE_SLOT=222`
 - `SERVER_EXTRA_COMMANDS=`
 - `ENABLE_EXOGENESIS=true`
 - `ENABLE_NEW_HORIZON=false`
@@ -107,6 +109,14 @@ docker attach $(docker compose ps -q mindustry)
 SERVER_EXTRA_COMMANDS=config autosave on,config autosaveSpacing 10
 ```
 
+`SERVER_BOOTSTRAP_MODE=auto` меняет порядок старта сервера:
+
+- если в `${SERVER_WORKDIR}/config/saves` уже есть `auto_*.msav`, entrypoint выполнит `loadautosave`
+- если autosave ещё нет, но в образ включён seed-сейв, entrypoint выполнит `load <slot>`
+- если ни autosave, ни seed-сейва нет, entrypoint вернётся к обычному `host <map> <mode>`
+
+`SERVER_BOOTSTRAP_SAVE_SLOT` опционален. Если он не указан и в образ включён ровно один seed-сейв, слот определится автоматически по имени файла без `.msav`.
+
 ## Карты, моды и данные
 
 После первого старта сервер создаст каталог `${SERVER_WORKDIR}/config`.
@@ -115,7 +125,10 @@ SERVER_EXTRA_COMMANDS=config autosave on,config autosaveSpacing 10
 - Для второго инстанса с `SERVER_WORKDIR=/data/instances/server-2` это будет `./data/instances/server-2/config`
 - Карты: `${SERVER_WORKDIR}/config/maps`
 - Моды: `${SERVER_WORKDIR}/config/mods`
+- Сейвы: `${SERVER_WORKDIR}/config/saves`
 - Сейвы, логи, настройки и админы тоже живут в `${SERVER_WORKDIR}/config`
+
+Если положить `.msav` в `docker/seeds/saves`, этот файл попадёт внутрь Docker image и на первом старте будет автоматически скопирован в `${SERVER_WORKDIR}/config/saves`. Это удобно для удалённого сервера: достаточно закоммитить seed-сейв в репозиторий, сделать `git pull` и `docker compose up -d --build`, без отдельного `scp` на машину.
 
 Если `ENABLE_NEW_HORIZON=true`, entrypoint автоматически скачает зафиксированный релиз New Horizon в `${SERVER_WORKDIR}/config/mods`, проверит его SHA-256 и затем применит локальный headless-патч для dedicated-сервера.
 
