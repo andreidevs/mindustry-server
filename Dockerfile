@@ -15,7 +15,6 @@ RUN curl -fsSL "https://github.com/Anuken/Mindustry/releases/download/${MINDUSTR
 
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/patches /opt/mindustry-patches
-COPY docker/seeds /opt/mindustry-seeds
 
 RUN chmod +x /entrypoint.sh
 
