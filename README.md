@@ -90,12 +90,12 @@ docker attach $(docker compose ps -q mindustry)
 - `SERVER_DESC=Public beta server`
 - `SERVER_PORT=6567`
 - `SERVER_MODE=survival`
-- `SERVER_MAP=Tar_Fields`
+- `SERVER_MAP=Wasteland`
 - `SERVER_AUTO_HOST=true`
 - `SERVER_AUTO_PAUSE=true`
 - `SERVER_STRICT=true`
-- `SERVER_BOOTSTRAP_MODE=auto`
-- `SERVER_BOOTSTRAP_SAVE_SLOT=222`
+- `SERVER_BOOTSTRAP_MODE=off`
+- `SERVER_BOOTSTRAP_SAVE_SLOT=`
 - `SERVER_EXTRA_COMMANDS=`
 - `ENABLE_EXOGENESIS=true`
 - `ENABLE_NEW_HORIZON=false`
